@@ -1,0 +1,68 @@
+﻿```python
+import re
+import json
+import requests
+from urllib.parse import urlparse
+from bs4 import BeautifulSoup
+
+
+def extract_tumblr_links(text):
+    # Regular expression to extract Tumblr links
+    tumblr_pattern = r'(https?://(?:\w+\.)*tumblr\.com/post/\d+/[^"\s]+)'
+    return re.findall(tumblr_pattern, text)
+
+
+def get_image_url_from_tumblr(tumblr_link):
+    # Extract the post ID from the Tumblr link
+    parsed_url = urlparse(tumblr_link)
+    post_id = parsed_url.path.split('/')[2]
+
+
+    # Construct URL for API request
+    api_url = f"https://api.tumblr.com/v2/blog{parsed_url.netloc}/posts?id={post_id}&api_key=API_KEY"
+
+
+    # Fetch post data from Tumblr API
+    response = requests.get(api_url)
+    data = response.json()
+
+
+    # Extract image URL from post data
+    if 'response' in data and 'posts' in data['response']:
+        post = data['response']['posts'][0]
+        if 'photos' in post:
+            return post['photos'][0]['original_size']['url']
+    
+    return None
+
+
+def download_image(image_url, output_path):
+    response = requests.get(image_url)
+    with open(output_path, 'wb') as f:
+        f.write(response.content)
+
+
+def main():
+    text = "long string of text or JSON file content here."
+
+
+    # Extract Tumblr links from text
+    tumblr_links = extract_tumblr_links(text)
+
+
+    for tumblr_link in tumblr_links:
+        # Get the image URL from Tumblr post
+        image_url = get_image_url_from_tumblr(tumblr_link)
+
+
+        if image_url:
+            # Download the image
+            download_image(image_url, f"image_{tumblr_link.split('/')[-1]}.jpg")
+            print(f"Image downloaded from {tumblr_link}")
+
+
+if __name__ == "__main__":
+    main()
+``' 
+```bash
+pip install requests beautifulsoup4
